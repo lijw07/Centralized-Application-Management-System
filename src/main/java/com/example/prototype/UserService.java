@@ -16,17 +16,16 @@ public class UserService {
         if (config.getDriverClassName() != null && !config.getDriverClassName().isEmpty()) {
             Class.forName(config.getDriverClassName());
         }
-        try (Connection conn = DriverManager.getConnection(
-                config.getUrl(), config.getUsername(), config.getPassword());
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT Id, FirstName, LastName, EmailAddress, Role FROM User")) {
+        try (Connection conn = DriverManager.getConnection(config.getUrl(), config.getUsername(), config.getPassword());
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT employeeId, firstName, lastName, email, role FROM Employees")) {
             while (rs.next()) {
                 users.add(new User(
-                        rs.getInt("Id"),
-                        rs.getString("FirstName"),
-                        rs.getString("LastName"),
-                        rs.getString("EmailAddress"),
-                        rs.getString("Role")
+                        rs.getString("employeeId"),
+                        rs.getString("firstName"),
+                        rs.getString("lastName"),
+                        rs.getString("email"),
+                        rs.getString("role")
                 ));
             }
         }

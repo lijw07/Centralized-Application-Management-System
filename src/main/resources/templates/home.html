@@ -9,26 +9,62 @@
 
 <body>
     <h1>Welcome to the Multi-Tenant Portal</h1>
+    <button onclick="location.href='/settings'">Settings</button>
+    <br>
     <div th:if="${error}" style="color:red;" th:text="${error}"></div>
     <table style="border: 1px solid black; border-collapse: collapse;">
         <thead>
             <tr>
                 <th>#</th>
-                <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>Role</th>
+                <th>
+                    <a th:href="@{/(sort='employeeId',dir=${sort == 'employeeId' and dir == 'asc' ? 'desc' : (sort == 'employeeId' and dir == 'desc' ? 'none' : 'asc')})}">
+                        Employee Id
+                        <span th:if="${sort == 'employeeId'}" th:text="${dir == 'asc' ? '▲' : (dir == 'desc' ? '▼' : '')}"></span>
+                    </a>
+                </th>
+                <th>
+                    <a th:href="@{/(sort='firstName',dir=${sort == 'firstName' and dir == 'asc' ? 'desc' : (sort == 'firstName' and dir == 'desc' ? 'none' : 'asc')})}">
+                        First Name
+                        <span th:if="${sort == 'firstName'}" th:text="${dir == 'asc' ? '▲' : (dir == 'desc' ? '▼' : '')}"></span>
+                    </a>
+                </th>
+                <th>
+                    <a th:href="@{/(sort='lastName',dir=${sort == 'lastName' and dir == 'asc' ? 'desc' : (sort == 'lastName' and dir == 'desc' ? 'none' : 'asc')})}">
+                        Last Name
+                        <span th:if="${sort == 'lastName'}" th:text="${dir == 'asc' ? '▲' : (dir == 'desc' ? '▼' : '')}"></span>
+                    </a>
+                </th>
+                <th>
+                    <a th:href="@{/(sort='email',dir=${sort == 'email' and dir == 'asc' ? 'desc' : (sort == 'email' and dir == 'desc' ? 'none' : 'asc')})}">
+                        Email
+                        <span th:if="${sort == 'email'}" th:text="${dir == 'asc' ? '▲' : (dir == 'desc' ? '▼' : '')}"></span>
+                    </a>
+                </th>
+                <th>
+                    <a th:href="@{/(sort='role',dir=${sort == 'role' and dir == 'asc' ? 'desc' : (sort == 'role' and dir == 'desc' ? 'none' : 'asc')})}">
+                        Role
+                        <span th:if="${sort == 'role'}" th:text="${dir == 'asc' ? '▲' : (dir == 'desc' ? '▼' : '')}"></span>
+                    </a>
+                </th>
             </tr>
         </thead>
         <tbody>
             <tr th:each="user, iterStat : ${users}">
                 <td th:text="${startIndex + iterStat.index}"></td>
-                <td th:text="${user.id}"></td>
+                <td th:text="${user.employeeId}"></td>
                 <td th:text="${user.firstName}"></td>
                 <td th:text="${user.lastName}"></td>
-                <td th:text="${user.role}"></td>
                 <td th:text="${user.email}"></td>
+                <td>
+                    <select th:id="'role-' + ${user.employeeId}"
+                            th:data-employee-id="${user.employeeId}"
+                            th:data-email="${user.email}"
+                            onchange="updateUserRole(this)">
+                        <option value="user" th:selected="${#strings.equalsIgnoreCase(user.role, 'user')}">User</option>
+                        <option value="admin" th:selected="${#strings.equalsIgnoreCase(user.role, 'admin')}">Admin</option>
+                        <option value="reader" th:selected="${#strings.equalsIgnoreCase(user.role, 'reader')}">Reader</option>
+                    </select>
+                </td>
             </tr>
         </tbody>
     </table>
@@ -53,8 +89,31 @@
     <a th:if="${currentPage < totalPages}" th:href="@{/(page=${currentPage+1},size=${pageSize})}">Next &raquo;</a>
     <span th:if="${currentPage == totalPages}" class="disabled">Next &raquo;</span>
 </div>
-    <br>
-    <button onclick="location.href='/settings'">Settings</button>
+<script>
+function updateUserRole(selectElem) {
+    const employeeId = selectElem.getAttribute('data-employee-id');
+    const newRole = selectElem.value;
+    fetch('/updateRole', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            employeeId: employeeId,
+            role: newRole
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Update failed');
+        return response.text();
+    })
+    .then(msg => {
+        alert('Role updated!');
+    })
+    .catch(err => {
+        alert('Failed to update role: ' + err);
+    });
+}
+</script>
 </body>
-
 </html>
