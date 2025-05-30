@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <meta charset="UTF-8">
+    <title>Multi-Tenant Portal</title>
+</head>
+
+<body>
+    <h1>Welcome to the Multi-Tenant Portal</h1>
+    <div th:if="${error}" style="color:red;" th:text="${error}"></div>
+    <table style="border: 1px solid black; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Role</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="user, iterStat : ${users}">
+                <td th:text="${startIndex + iterStat.index}"></td>
+                <td th:text="${user.id}"></td>
+                <td th:text="${user.firstName}"></td>
+                <td th:text="${user.lastName}"></td>
+                <td th:text="${user.role}"></td>
+                <td th:text="${user.email}"></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="pagination" th:if="${totalPages > 1}">
+    <a th:if="${currentPage > 1}" th:href="@{/(page=${currentPage-1},size=${pageSize})}">&laquo; Prev</a>
+    <span th:if="${currentPage == 1}" class="disabled">&laquo; Prev</span>
+
+    <a th:if="${totalPages > 5 and currentPage > 3}" th:href="@{/(page=1,size=${pageSize})}">1</a>
+    <span th:if="${totalPages > 5 and currentPage > 4}">...</span>
+
+    <span th:each="i : ${#numbers.sequence(
+            (currentPage > 3 ? (currentPage + 2 > totalPages ? totalPages - 4 : currentPage - 2) : 1),
+            (currentPage > 3 ? (currentPage + 2 > totalPages ? totalPages : currentPage + 2) : (totalPages > 5 ? 5 : totalPages))
+        )}">
+        <a th:if="${i != currentPage}" th:href="@{/(page=${i},size=${pageSize})}" th:text="${i}"></a>
+        <span th:if="${i == currentPage}" th:text="${i}" class="active"></span>
+    </span>
+
+    <span th:if="${totalPages > 5 and currentPage + 2 < totalPages}">...</span>
+    <a th:if="${totalPages > 5 and currentPage + 2 < totalPages}" th:href="@{/(page=${totalPages},size=${pageSize})}" th:text="${totalPages}"></a>
+
+    <a th:if="${currentPage < totalPages}" th:href="@{/(page=${currentPage+1},size=${pageSize})}">Next &raquo;</a>
+    <span th:if="${currentPage == totalPages}" class="disabled">Next &raquo;</span>
+</div>
+    <br>
+    <button onclick="location.href='/settings'">Settings</button>
+</body>
+
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Datasource Settings</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <script>
+        function addDatasourceForm() {
+            const template = document.querySelector('.datasource-form-template');
+            const clone = template.cloneNode(true);
+            clone.classList.remove('datasource-form-template');
+            clone.classList.add('datasource-form');
+            clone.style.display = 'block';
+
+            // Add event listener to the remove button in the cloned form
+            const removeBtn = clone.querySelector('.remove-datasource-btn');
+            removeBtn.addEventListener('click', function () {
+                clone.remove();
+            });
+
+            document.getElementById('datasource-forms').appendChild(clone);
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Configure Datasources</h1>
+    <div th:if="${success}" style="color: green;" th:text="${success}"></div>
+    <form th:action="@{/settings}" th:object="${form}" method="post">
+        <div id="datasource-forms">
+            <div class="datasource-form-template" style="display: none; margin-bottom: 20px;">
+                <div th:each="ds, iterStat : *{dataSources}">
+                    <div th:each="ds, iterStat : *{dataSources}">
+                        <label>Datasource URL:
+                            <input type="text" th:field="*{dataSources[__${iterStat.index}__].url}" />
+                        </label><br>
+                        <label>Username:
+                            <input type="text" th:field="*{dataSources[__${iterStat.index}__].username}" />
+                        </label><br>
+                        <label>Password:
+                            <input type="password" th:field="*{dataSources[__${iterStat.index}__].password}" />
+                        </label><br>
+                        <label>Driver Class Name:
+                            <select th:field="*{dataSources[__${iterStat.index}__].driverClassName}">
+                                <option value="com.mysql.cj.jdbc.Driver">MySQL</option>
+                                <option value="org.postgresql.Driver">PostgreSQL</option>
+                                <option value="oracle.jdbc.OracleDriver">Oracle</option>
+                                <option value="com.microsoft.sqlserver.jdbc.SQLServerDriver">SQL Server</option>
+                            </select>
+                        </label>
+                        <br>
+                        <button type="button" class="remove-datasource-btn"
+                            onclick="this.closest('.datasource-form').remove()">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="button" onclick="addDatasourceForm()">Add Datasource</button>
+        <br>
+        <br>
+        <input type="submit" value="Save Datasources" />
+    </form>
+    <br>
+    <button type="button" onclick="location.href='/'">Back to Home</button>
+</body>
+
+</html>
