@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
 
-interface ValidationRule {
+interface ValidationRule<T = any> {
   required?: boolean;
   minLength?: number;
   maxLength?: number;
   pattern?: RegExp;
-  custom?: (value: any) => string | null;
+  // Accepts value + full form state, for cross-field checks
+  custom?: (value: any, formState: T) => string | null;
 }
 
 interface FormField {
@@ -65,7 +66,8 @@ export function useForm<T extends Record<string, any>>({
       }
 
       if (rules.custom) {
-        const customError = rules.custom(value);
+    
+        const customError = rules.custom(value, formState);
         if (customError) return customError;
       }
 

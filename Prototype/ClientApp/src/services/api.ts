@@ -160,6 +160,25 @@ export const userApi = {
   getUserCounts: () =>
     api.get<{ success: boolean; data: { totalUsers: number; totalVerifiedUsers: number; totalTemporaryUsers: number }; message?: string }>('/settings/user/counts'),
   
+  getUser: (userId: string) =>
+  api.get<{
+    success: boolean;
+    data: { userData: {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    email: string;
+    phoneNumber?: string;
+    role: string;
+    isActive: boolean;
+    createdAt: string;
+    lastLogin: string;
+  };
+  }
+    message?: string;
+  }>(`/users/${userId}`),
+
   updateUser: (userData: {
     userId: string;
     firstName: string;

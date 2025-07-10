@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Edit3, 
-  Trash2, 
-  Mail, 
-  Phone, 
+import { Link } from 'react-router-dom';
+import {
+  Users,
+  Search,
+  Edit3,
+  Trash2,
+  Mail,
+  Phone,
   Calendar,
   Shield,
   CheckCircle2,
@@ -21,62 +22,13 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  AlertTriangle
+  AlertTriangle,
 } from 'lucide-react';
 import { userApi, roleApi } from '../../services/api';
 import { authApi } from '../../services/api';
+import { User, Role, EditTemporaryUserForm, EditUserForm } from './types';
+import CreateEditUserModal from './modals/Create';
 
-interface Role {
-  userRoleId: string;
-  role: string;
-  createdAt: string;
-  createdBy: string;
-}
-
-interface User {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber?: string;
-  isActive: boolean;
-  role: string;
-  lastLogin?: string;
-  createdAt: string;
-  isTemporary?: boolean;
-}
-
-interface NewUserForm {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-  password: string;
-  reEnterPassword: string;
-  role: string;
-}
-
-interface EditUserForm {
-  userId: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-  isActive: boolean;
-}
-
-interface EditTemporaryUserForm {
-  temporaryUserId: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-}
 
 export default function Accounts() {
   const [users, setUsers] = useState<User[]>([]);
@@ -90,39 +42,23 @@ export default function Accounts() {
   const [showAddUser, setShowAddUser] = useState(false);
   const [userDetailModal, setUserDetailModal] = useState<User | null>(null);
   const [showEditUser, setShowEditUser] = useState(false);
-  const [editUserForm, setEditUserForm] = useState<EditUserForm>({
-    userId: '',
-    firstName: '',
-    lastName: '',
-    username: '',
-    email: '',
-    phoneNumber: '',
-    role: '',
-    isActive: true
-  });
-  const [editFormErrors, setEditFormErrors] = useState<Partial<EditUserForm>>({});
+
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [editSubmitSuccess, setEditSubmitSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   // Pagination state
+
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  
+
   // New User Form State
-  const [newUserForm, setNewUserForm] = useState<NewUserForm>({
-    firstName: '',
-    lastName: '',
-    username: '',
-    email: '',
-    phoneNumber: '',
-    password: '',
-    reEnterPassword: '',
-    role: ''
-  });
-  const [formErrors, setFormErrors] = useState<Partial<NewUserForm>>({});
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showReEnterPassword, setShowReEnterPassword] = useState(false);
@@ -131,22 +67,17 @@ export default function Accounts() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
 
-  // ESC key handler for modal
-  useEffect(() => {
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && showAddUser) {
-        resetAddUserModal();
-      }
-    };
+  const openCreateModal = () => {
+    setEditingUser(null);
+    setModalOpen(true);
+  };
 
-    if (showAddUser) {
-      document.addEventListener('keydown', handleEscKey);
-    }
+   const openEditModal = (user: User) => {
+    setEditingUser(user);
+    setModalOpen(true);
+  };
 
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-    };
-  }, [showAddUser]);
+  const closeModal = () => setModalOpen(false);
 
   const fetchAllUsers = async () => {
     try {
@@ -154,10 +85,10 @@ export default function Accounts() {
       let currentPage = 1;
       const maxPageSize = 100; // Backend limit
       let hasMoreData = true;
-      
+
       while (hasMoreData) {
         const usersResponse = await userApi.getAllUsers(currentPage, maxPageSize);
-        
+
         if (usersResponse.success && usersResponse.data?.data) {
           const transformedUsers: User[] = usersResponse.data.data.map((user: any) => ({
             userId: user.userId,
@@ -172,9 +103,9 @@ export default function Accounts() {
             createdAt: user.createdAt,
             isTemporary: user.isTemporary || false
           }));
-          
+
           allUsers = [...allUsers, ...transformedUsers];
-          
+
           // Check if we've fetched all pages
           const totalPages = usersResponse.data.totalPages || 1;
           hasMoreData = currentPage < totalPages;
@@ -200,7 +131,7 @@ export default function Accounts() {
           hasMoreData = false;
         }
       }
-      
+
       setAllUsers(allUsers);
       return allUsers;
     } catch (error) {
@@ -212,11 +143,11 @@ export default function Accounts() {
   // Load users and roles from database
   const loadData = async (page: number = currentPage, size: number = pageSize) => {
     setLoading(true);
-    
+
     // Load users - this should always work regardless of roles
     try {
       const usersResponse = await userApi.getAllUsers(page, size);
-      
+
       if (usersResponse.success && usersResponse.data?.data) {
         const transformedUsers: User[] = usersResponse.data.data.map((user: any) => ({
           userId: user.userId,
@@ -231,7 +162,7 @@ export default function Accounts() {
           createdAt: user.createdAt,
           isTemporary: user.isTemporary || false
         }));
-        
+
         setUsers(transformedUsers);
         setCurrentPage(usersResponse.data.page || page);
         setPageSize(usersResponse.data.pageSize || size);
@@ -269,11 +200,11 @@ export default function Accounts() {
       console.error('Error loading users:', error);
       setUsers([]);
     }
-    
+
     // Load roles - independent of users
     try {
       const rolesResponse = await roleApi.getAllRoles(1, 100); // Get up to 100 roles
-      
+
       if (rolesResponse.success && rolesResponse.data?.data) {
         setRoles(rolesResponse.data.data);
       } else if (rolesResponse.success && rolesResponse.roles) {
@@ -287,7 +218,7 @@ export default function Accounts() {
       console.error('Error loading roles:', error);
       setRoles([]);
     }
-    
+
     setLoading(false);
   };
 
@@ -304,7 +235,7 @@ export default function Accounts() {
       if (response.success && response.data?.data) {
         const newTotalPages = response.data.totalPages || 1;
         const newTotalCount = response.data.totalCount || 0;
-        
+
         if (currentPage > newTotalPages && newTotalCount > 0) {
           // Navigate to last available page
           setCurrentPage(newTotalPages);
@@ -340,28 +271,28 @@ export default function Accounts() {
   // Use filtered/sorted users for display (when filters are active)
   // Use backend pagination when no filters are applied
   const hasFilters = searchTerm !== '' || filterRole !== 'all' || filterStatus !== 'all' || filterVerification !== 'all' || sortBy !== 'newest';
-  
+
   // Use allUsers for filtering/sorting, users for backend pagination
   const sourceUsers = hasFilters ? allUsers : users;
-  
+
   // Filter users
   const filteredUsers = sourceUsers.filter(user => {
-    const matchesSearch = searchTerm === '' || 
-                         user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch = searchTerm === '' ||
+      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesRole = filterRole === 'all' || user.role.toLowerCase() === filterRole.toLowerCase();
-    
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' && user.isActive) ||
-                         (filterStatus === 'inactive' && !user.isActive);
-    
+
+    const matchesStatus = filterStatus === 'all' ||
+      (filterStatus === 'active' && user.isActive) ||
+      (filterStatus === 'inactive' && !user.isActive);
+
     const matchesVerification = filterVerification === 'all' ||
-                               (filterVerification === 'verified' && !user.isTemporary) ||
-                               (filterVerification === 'unverified' && user.isTemporary);
-    
+      (filterVerification === 'verified' && !user.isTemporary) ||
+      (filterVerification === 'unverified' && user.isTemporary);
+
     return matchesSearch && matchesRole && matchesStatus && matchesVerification;
   });
 
@@ -385,7 +316,7 @@ export default function Accounts() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }
   });
-  
+
   let currentUsers: User[], displayTotalPages: number, displayTotalCount: number;
   if (hasFilters) {
     // Client-side pagination for filtered results
@@ -406,24 +337,7 @@ export default function Accounts() {
     setCurrentPage(1);
   }, [searchTerm, filterRole, filterStatus, filterVerification, sortBy]);
 
-  // Add escape key listener for edit user modal
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (showEditUser) {
-          resetEditUserModal();
-        }
-        if (userDetailModal) {
-          setUserDetailModal(null);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleEscapeKey);
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [showEditUser, userDetailModal]);
+ 
 
   const getRoleBadgeColor = (role: string) => {
     // Create a consistent color mapping based on role name
@@ -445,7 +359,7 @@ export default function Accounts() {
     const now = new Date();
     const lastLogin = new Date(dateString);
     const diffInHours = Math.floor((now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     const diffInDays = Math.floor(diffInHours / 24);
@@ -453,349 +367,6 @@ export default function Accounts() {
     return formatDate(dateString);
   };
 
-  // Form handling functions
-  const handleInputChange = (field: keyof NewUserForm, value: string) => {
-    setNewUserForm(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const errors: Partial<NewUserForm> = {};
-
-    // First name validation
-    if (!newUserForm.firstName.trim()) {
-      errors.firstName = 'First name is required';
-    } else if (newUserForm.firstName.length > 50) {
-      errors.firstName = 'First name must be between 1 and 50 characters';
-    }
-
-    // Last name validation
-    if (!newUserForm.lastName.trim()) {
-      errors.lastName = 'Last name is required';
-    } else if (newUserForm.lastName.length > 50) {
-      errors.lastName = 'Last name must be between 1 and 50 characters';
-    }
-
-    // Username validation
-    if (!newUserForm.username.trim()) {
-      errors.username = 'Username is required';
-    } else if (newUserForm.username.length < 3 || newUserForm.username.length > 100) {
-      errors.username = 'Username must be between 3 and 100 characters';
-    } else if (!/^[a-zA-Z0-9_.-]+$/.test(newUserForm.username)) {
-      errors.username = 'Username can only contain letters, numbers, underscores, dots, and hyphens';
-    }
-
-    // Email validation
-    if (!newUserForm.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(newUserForm.email)) {
-      errors.email = 'Invalid email format';
-    } else if (newUserForm.email.length > 255) {
-      errors.email = 'Email cannot exceed 255 characters';
-    }
-
-    // Phone number validation (basic format)
-    if (!newUserForm.phoneNumber.trim()) {
-      errors.phoneNumber = 'Phone number is required';
-    } else if (newUserForm.phoneNumber.length > 20) {
-      errors.phoneNumber = 'Phone number cannot exceed 20 characters';
-    }
-
-    // Role validation
-    if (!newUserForm.role.trim()) {
-      errors.role = 'Role is required';
-    }
-
-    // Password validation to match backend requirements
-    if (!newUserForm.password.trim()) {
-      errors.password = 'Password is required';
-    } else if (newUserForm.password.length < 8 || newUserForm.password.length > 128) {
-      errors.password = 'Password must be between 8 and 128 characters';
-    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(newUserForm.password)) {
-      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character (@$!%*?&)';
-    }
-
-    // Confirm password validation
-    if (!newUserForm.reEnterPassword.trim()) {
-      errors.reEnterPassword = 'Please confirm password';
-    } else if (newUserForm.password !== newUserForm.reEnterPassword) {
-      errors.reEnterPassword = 'Passwords do not match';
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmitNewUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-    setFormErrors({}); // Clear any previous errors
-    
-    try {
-      const response = await authApi.register(newUserForm);
-      if (response && response.success) {
-        setSubmitSuccess(true);
-        // Reset form
-        setNewUserForm({
-          firstName: '',
-          lastName: '',
-          username: '',
-          email: '',
-          phoneNumber: '',
-          password: '',
-          reEnterPassword: '',
-          role: ''
-        });
-        setFormErrors({});
-        
-        // Refresh the user list and go to first page to show the newly created user
-        refetchAndGoToFirstPage();
-        
-        // User form will be closed manually by user clicking X
-      } else {
-        // Handle server errors
-        console.error('Registration failed:', response);
-        if (response?.errors) {
-          // Handle field-specific validation errors from server
-          const serverErrors: Partial<NewUserForm> = {};
-          const errors = response.errors as unknown as { [key: string]: string | string[] };
-          Object.keys(errors).forEach(key => {
-            const fieldName = key.toLowerCase();
-            const errorValue = errors[key];
-            const errorMessage = Array.isArray(errorValue) ? errorValue[0] : errorValue;
-            if (fieldName.includes('firstname')) serverErrors.firstName = errorMessage;
-            else if (fieldName.includes('lastname')) serverErrors.lastName = errorMessage;
-            else if (fieldName.includes('username')) serverErrors.username = errorMessage;
-            else if (fieldName.includes('email')) serverErrors.email = errorMessage;
-            else if (fieldName.includes('phone')) serverErrors.phoneNumber = errorMessage;
-            else if (fieldName.includes('password')) serverErrors.password = errorMessage;
-            else serverErrors.email = errorMessage;
-          });
-          setFormErrors(serverErrors);
-        } else {
-          setFormErrors({ email: response?.message || 'Registration failed' });
-        }
-      }
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      // Handle network or parsing errors
-      if (error.status === 400 && error.errors) {
-        const serverErrors: Partial<NewUserForm> = {};
-        const errors = error.errors as unknown as { [key: string]: string | string[] };
-        Object.keys(errors).forEach(key => {
-          const fieldName = key.toLowerCase();
-          const errorValue = errors[key];
-          const errorMessage = Array.isArray(errorValue) ? errorValue[0] : errorValue;
-          if (fieldName.includes('firstname')) serverErrors.firstName = errorMessage;
-          else if (fieldName.includes('lastname')) serverErrors.lastName = errorMessage;
-          else if (fieldName.includes('username')) serverErrors.username = errorMessage;
-          else if (fieldName.includes('email')) serverErrors.email = errorMessage;
-          else if (fieldName.includes('phone')) serverErrors.phoneNumber = errorMessage;
-          else if (fieldName.includes('password')) serverErrors.password = errorMessage;
-          else serverErrors.email = errorMessage;
-        });
-        setFormErrors(serverErrors);
-      } else {
-        setFormErrors({ email: error.message || 'Network error occurred' });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const resetAddUserModal = () => {
-    setNewUserForm({
-      firstName: '',
-      lastName: '',
-      username: '',
-      email: '',
-      phoneNumber: '',
-      password: '',
-      reEnterPassword: '',
-      role: ''
-    });
-    setShowAddUser(false);
-    setSubmitSuccess(false);
-    setFormErrors({});
-    setIsSubmitting(false);
-    setSubmitSuccess(false);
-    setShowPassword(false);
-    setShowReEnterPassword(false);
-    setShowAddUser(false);
-  };
-
-  // Edit User Form handling
-  const handleEditInputChange = (field: keyof EditUserForm, value: string | boolean) => {
-    setEditUserForm(prev => ({ ...prev, [field]: value }));
-    if (editFormErrors[field]) {
-      setEditFormErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const validateEditForm = (): boolean => {
-    const errors: Partial<EditUserForm> = {};
-
-    if (!editUserForm.firstName.trim()) {
-      errors.firstName = 'First name is required';
-    } else if (editUserForm.firstName.length > 50) {
-      errors.firstName = 'First name must be between 1 and 50 characters';
-    }
-
-    if (!editUserForm.lastName.trim()) {
-      errors.lastName = 'Last name is required';
-    } else if (editUserForm.lastName.length > 50) {
-      errors.lastName = 'Last name must be between 1 and 50 characters';
-    }
-
-    if (!editUserForm.username.trim()) {
-      errors.username = 'Username is required';
-    } else if (editUserForm.username.length < 3 || editUserForm.username.length > 100) {
-      errors.username = 'Username must be between 3 and 100 characters';
-    } else if (!/^[a-zA-Z0-9_.-]+$/.test(editUserForm.username)) {
-      errors.username = 'Username can only contain letters, numbers, underscores, dots, and hyphens';
-    }
-
-    if (!editUserForm.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(editUserForm.email)) {
-      errors.email = 'Invalid email format';
-    } else if (editUserForm.email.length > 255) {
-      errors.email = 'Email cannot exceed 255 characters';
-    }
-
-    if (editUserForm.phoneNumber && editUserForm.phoneNumber.length > 20) {
-      errors.phoneNumber = 'Phone number cannot exceed 20 characters';
-    }
-
-    // Find the user being edited to check if it's temporary
-    const userBeingEdited = users.find(u => u.userId === editUserForm.userId);
-    
-    // Only validate role for regular users (temporary users don't have roles)
-    if (!userBeingEdited?.isTemporary && !editUserForm.role.trim()) {
-      errors.role = 'Role is required';
-    }
-
-    setEditFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleEditUserSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateEditForm()) return;
-
-    setIsEditSubmitting(true);
-    setEditFormErrors({});
-    
-    try {
-      // Find the user being edited to check if it's temporary
-      const userBeingEdited = users.find(u => u.userId === editUserForm.userId);
-      let response;
-      
-      if (userBeingEdited?.isTemporary) {
-        // Update temporary user
-        response = await userApi.updateTemporaryUser({
-          temporaryUserId: editUserForm.userId,
-          firstName: editUserForm.firstName,
-          lastName: editUserForm.lastName,
-          username: editUserForm.username,
-          email: editUserForm.email,
-          phoneNumber: editUserForm.phoneNumber
-        });
-      } else {
-        // Update regular user
-        response = await userApi.updateUser(editUserForm);
-      }
-      
-      if (response && response.success) {
-        setEditSubmitSuccess(true);
-        // Update the user in the local state
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
-            user.userId === editUserForm.userId 
-              ? { ...user, ...editUserForm }
-              : user
-          )
-        );
-        
-        // Edit form will be closed manually by user clicking X
-      } else {
-        setEditFormErrors({ email: response?.message || 'Update failed' });
-      }
-    } catch (error: any) {
-      console.error('Update user error:', error);
-      if (error.status === 400 && error.errors) {
-        const serverErrors: Partial<EditUserForm> = {};
-        const errors = error.errors as unknown as { [key: string]: string | string[] };
-        Object.keys(errors).forEach(key => {
-          const fieldName = key.toLowerCase();
-          const errorValue = errors[key];
-          const errorMessage = Array.isArray(errorValue) ? errorValue[0] : errorValue;
-          if (fieldName.includes('firstname')) serverErrors.firstName = errorMessage;
-          else if (fieldName.includes('lastname')) serverErrors.lastName = errorMessage;
-          else if (fieldName.includes('username')) serverErrors.username = errorMessage;
-          else if (fieldName.includes('email')) serverErrors.email = errorMessage;
-          else if (fieldName.includes('phone')) serverErrors.phoneNumber = errorMessage;
-          else serverErrors.email = errorMessage;
-        });
-        setEditFormErrors(serverErrors);
-      } else {
-        setEditFormErrors({ email: error.message || 'Network error occurred' });
-      }
-    } finally {
-      setIsEditSubmitting(false);
-    }
-  };
-
-  const resetEditUserModal = () => {
-    setEditUserForm({
-      userId: '',
-      firstName: '',
-      lastName: '',
-      username: '',
-      email: '',
-      phoneNumber: '',
-      role: '',
-      isActive: true
-    });
-    setShowEditUser(false);
-    setEditSubmitSuccess(false);
-    setEditFormErrors({});
-    setIsEditSubmitting(false);
-    setEditSubmitSuccess(false);
-    setShowEditUser(false);
-  };
-
-  // Dropdown action handlers
-  const handleFreezeUser = async (user: User) => {
-    try {
-      const updatedUser = {
-        ...user,
-        isActive: !user.isActive
-      };
-      
-      const response = await userApi.updateUser(updatedUser);
-      
-      if (response && response.success) {
-        // Update the user in the local state
-        setUsers(prevUsers => 
-          prevUsers.map(u => 
-            u.userId === user.userId 
-              ? { ...u, isActive: !u.isActive }
-              : u
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error updating user status:', error);
-    }
-  };
 
   const handleEmailUser = (user: User) => {
     // Open email client with pre-filled recipient
@@ -806,28 +377,28 @@ export default function Accounts() {
     if (!deletingUser) return;
 
     try {
-      
+
       // Test if we can access a working endpoint first
       try {
         const testResponse = await userApi.getProfile();
       } catch (testError) {
         console.log('API test failed:', testError);
       }
-      
+
       let response;
-      
+
       if (deletingUser.isTemporary) {
         response = await userApi.deleteTemporaryUser(deletingUser.userId);
       } else {
         response = await userApi.deleteUser(deletingUser.userId);
       }
-      
+
       if (response && response.success) {
         setDeleteSuccess(true);
-        
+
         // Smart refetch to handle pagination after deletion
         refetchUsers();
-        
+
         // Delete success modal will be closed manually by user clicking X
       } else {
         console.error('Failed to delete user:', response?.message);
@@ -849,8 +420,8 @@ export default function Accounts() {
 
   if (loading) {
     return (
-      <div className="min-vh-100 bg-light" style={{overflowX: 'hidden'}}>
-        <div className="container-fluid py-4" style={{maxWidth: '100%'}}>
+      <div className="min-vh-100 bg-light" style={{ overflowX: 'hidden' }}>
+        <div className="container-fluid py-4" style={{ maxWidth: '100%' }}>
           {/* Header */}
           <div className="mb-4">
             <div className="d-flex align-items-center justify-content-between mb-2">
@@ -869,7 +440,7 @@ export default function Accounts() {
               </div>
             </div>
           </div>
-          
+
           {/* Loading Content */}
           <div className="card shadow-sm border-0 rounded-4">
             <div className="card-body p-4 text-center">
@@ -884,9 +455,34 @@ export default function Accounts() {
     );
   }
 
+  // Dropdown action handlers
+  const handleFreezeUser = async (user: User) => {
+    try {
+      const updatedUser = {
+        ...user,
+        isActive: !user.isActive
+      };
+
+      const response = await userApi.updateUser(updatedUser);
+
+      if (response && response.success) {
+        // Update the user in the local state
+        setUsers(prevUsers =>
+          prevUsers.map(u =>
+            u.userId === user.userId
+              ? { ...u, isActive: !u.isActive }
+              : u
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+    }
+  };
+
   return (
-    <div className="min-vh-100 bg-light" style={{overflowX: 'hidden'}}>
-      <div className="container-fluid py-4" style={{maxWidth: '100%'}}>
+    <div className="min-vh-100 bg-light" style={{ overflowX: 'hidden' }}>
+      <div className="container-fluid py-4" style={{ maxWidth: '100%' }}>
         {/* Header */}
         <div className="mb-4">
           <div className="d-flex align-items-center justify-content-between mb-2">
@@ -898,17 +494,10 @@ export default function Accounts() {
               </div>
             </div>
             <div className="d-flex gap-2">
-              <button 
-                className="btn btn-primary rounded-3 d-flex align-items-center"
-                onClick={() => setShowAddUser(true)}
-              >
-                <UserPlus className="me-2" size={18} />
-                Add User
-              </button>
+                <button className="btn btn-primary rounded-3 d-flex align-items-center" onClick={openCreateModal}>Add User</button>           
             </div>
           </div>
         </div>
-
         {/* Filters and Search */}
         <div className="row mb-4">
           <div className="col-12">
@@ -971,7 +560,7 @@ export default function Accounts() {
                         const newSortBy = e.target.value;
                         setSortBy(newSortBy);
                         setCurrentPage(1); // Reset to first page when sorting changes
-                        
+
                         // If switching to a client-side sort and we don't have all users, fetch them
                         if (newSortBy !== 'newest' && allUsers.length === 0) {
                           await fetchAllUsers();
@@ -1000,8 +589,8 @@ export default function Accounts() {
         <div className="row g-4">
           {currentUsers.map((user) => (
             <div key={user.userId} className="col-xl-3 col-lg-4 col-md-6 col-sm-12">
-              <div 
-                className="card border-0 rounded-4 shadow-sm h-100 dashboard-card" 
+              <div
+                className="card border-0 rounded-4 shadow-sm h-100 dashboard-card"
                 style={{ cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
                 onClick={(e) => {
                   // Don't open modal if clicking on dropdown
@@ -1043,7 +632,7 @@ export default function Accounts() {
                       </button>
                       <ul className="dropdown-menu dropdown-menu-end" style={{ width: '190px' }}>
                         <li>
-                          <button 
+                          <button
                             className="dropdown-item d-flex align-items-center w-100"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1061,7 +650,7 @@ export default function Accounts() {
                           </button>
                         </li>
                         <li>
-                          <button 
+                          <button
                             className="dropdown-item d-flex align-items-center w-100"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1076,7 +665,7 @@ export default function Accounts() {
                         </li>
                         <li><hr className="dropdown-divider" /></li>
                         <li>
-                          <button 
+                          <button
                             className="dropdown-item text-danger d-flex align-items-center w-100"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1124,7 +713,7 @@ export default function Accounts() {
                   <div className="mb-2">
                     <div className="d-flex align-items-center mb-1">
                       <Mail className="text-muted me-2" size={12} />
-                      <span className="small text-dark text-truncate" style={{maxWidth: '150px'}} title={user.email}>{user.email}</span>
+                      <span className="small text-dark text-truncate" style={{ maxWidth: '150px' }} title={user.email}>{user.email}</span>
                     </div>
                     {user.phoneNumber && (
                       <div className="d-flex align-items-center mb-1">
@@ -1156,12 +745,12 @@ export default function Accounts() {
                   <Users size={64} className="text-muted mb-3 opacity-50" />
                   <h3 className="fw-bold text-muted mb-2">No Users Found</h3>
                   <p className="text-muted mb-4">
-                    {searchTerm || filterRole !== 'all' 
-                      ? 'Try adjusting your search or filter criteria.' 
+                    {searchTerm || filterRole !== 'all'
+                      ? 'Try adjusting your search or filter criteria.'
                       : 'Get started by adding your first user.'}
                   </p>
                   {(!searchTerm && filterRole === 'all') && (
-                    <button 
+                    <button
                       className="btn btn-primary rounded-3"
                       onClick={() => setShowAddUser(true)}
                     >
@@ -1188,9 +777,9 @@ export default function Accounts() {
               </span>
               <div className="d-flex align-items-center gap-2">
                 <span className="text-muted small">Users per page:</span>
-                <select 
-                  className="form-select form-select-sm" 
-                  style={{width: 'auto'}}
+                <select
+                  className="form-select form-select-sm"
+                  style={{ width: 'auto' }}
                   value={pageSize}
                   onChange={(e) => {
                     const newPageSize = Number(e.target.value);
@@ -1207,12 +796,12 @@ export default function Accounts() {
                 </select>
               </div>
             </div>
-            
+
             <nav>
               <ul className="pagination pagination-sm mb-0">
                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
+                  <button
+                    className="page-link"
                     onClick={() => {
                       setCurrentPage(1);
                       if (!hasFilters) {
@@ -1225,8 +814,8 @@ export default function Accounts() {
                   </button>
                 </li>
                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
+                  <button
+                    className="page-link"
                     onClick={() => {
                       const newPage = currentPage - 1;
                       setCurrentPage(newPage);
@@ -1239,7 +828,7 @@ export default function Accounts() {
                     <ChevronLeft size={16} />
                   </button>
                 </li>
-                
+
                 {/* Page numbers */}
                 {Array.from({ length: Math.min(5, displayTotalPages) }, (_, i) => {
                   let pageNum: number;
@@ -1252,11 +841,11 @@ export default function Accounts() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-                  
+
                   return (
                     <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
-                      <button 
-                        className="page-link" 
+                      <button
+                        className="page-link"
                         onClick={() => {
                           setCurrentPage(pageNum);
                           if (!hasFilters) {
@@ -1269,10 +858,10 @@ export default function Accounts() {
                     </li>
                   );
                 })}
-                
+
                 <li className={`page-item ${currentPage === displayTotalPages ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
+                  <button
+                    className="page-link"
                     onClick={() => {
                       const newPage = currentPage + 1;
                       setCurrentPage(newPage);
@@ -1286,8 +875,8 @@ export default function Accounts() {
                   </button>
                 </li>
                 <li className={`page-item ${currentPage === displayTotalPages ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
+                  <button
+                    className="page-link"
                     onClick={() => {
                       setCurrentPage(displayTotalPages);
                       if (!hasFilters) {
@@ -1306,11 +895,18 @@ export default function Accounts() {
 
         {/* User Detail Modal */}
         {userDetailModal && (
-          <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+          <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <div className="modal-dialog modal-dialog-centered modal-lg">
               <div className="modal-content border-0 rounded-4">
                 <div className="modal-header border-0 pb-0">
                   <div className="d-flex align-items-center">
+                   <Link
+                      to={`/accounts/${userDetailModal.userId}`}
+                      onClick={() => setUserDetailModal(null)}
+                      className="btn btn-link text-decoration-none"
+                    >
+                      View Full Profile
+                    </Link>
                     <div className="rounded-circle bg-primary bg-opacity-10 p-2 me-3">
                       <Users className="text-primary" size={20} />
                     </div>
@@ -1349,7 +945,7 @@ export default function Accounts() {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Basic Information */}
                     <div className="col-md-6">
                       <div className="bg-primary bg-opacity-10 rounded-4 p-4">
@@ -1377,7 +973,7 @@ export default function Accounts() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Contact Information */}
                     <div className="col-md-6">
                       <div className="bg-info bg-opacity-10 rounded-4 p-4">
@@ -1416,7 +1012,7 @@ export default function Accounts() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Activity Information */}
                     <div className="col-12">
                       <div className="bg-success bg-opacity-10 rounded-4 p-4">
@@ -1450,414 +1046,17 @@ export default function Accounts() {
                     </div>
                   </div>
                 </div>
-                <div className="modal-footer border-0">
-                  <div className="d-flex gap-2 w-100">
-                    <button 
-                      className="btn btn-outline-primary rounded-3 flex-fill"
-                      onClick={() => {
-                        setEditUserForm({
-                          userId: userDetailModal.userId,
-                          firstName: userDetailModal.firstName,
-                          lastName: userDetailModal.lastName,
-                          username: userDetailModal.username,
-                          email: userDetailModal.email,
-                          phoneNumber: userDetailModal.phoneNumber || '',
-                          role: userDetailModal.role,
-                          isActive: true
-                        });
-                        setUserDetailModal(null);
-                        setShowEditUser(true);
-                      }}
-                    >
-                      <Edit3 size={16} className="me-2" />
-                      Edit User
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Edit User Modal */}
-        {showEditUser && (
-          <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-              <div className="modal-content border-0 rounded-4">
-                <div className="modal-header border-0 pb-0">
-                  <h5 className="modal-title fw-bold">Edit User</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={resetEditUserModal}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  {editSubmitSuccess ? (
-                    <div className="text-center py-4">
-                      <CheckCircle2 size={64} className="text-success mb-3" />
-                      <h4 className="text-success fw-bold">User Updated Successfully!</h4>
-                      <p className="text-muted">The user information has been updated.</p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleEditUserSubmit}>
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">First Name</label>
-                          <input 
-                            type="text" 
-                            className={`form-control rounded-3 ${editFormErrors.firstName ? 'is-invalid' : ''}`}
-                            placeholder="Enter first name" 
-                            value={editUserForm.firstName}
-                            onChange={(e) => handleEditInputChange('firstName', e.target.value)}
-                          />
-                          {editFormErrors.firstName && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {editFormErrors.firstName}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Last Name</label>
-                          <input 
-                            type="text" 
-                            className={`form-control rounded-3 ${editFormErrors.lastName ? 'is-invalid' : ''}`}
-                            placeholder="Enter last name" 
-                            value={editUserForm.lastName}
-                            onChange={(e) => handleEditInputChange('lastName', e.target.value)}
-                          />
-                          {editFormErrors.lastName && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {editFormErrors.lastName}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label fw-semibold">Username</label>
-                          <input 
-                            type="text" 
-                            className={`form-control rounded-3 ${editFormErrors.username ? 'is-invalid' : ''}`}
-                            placeholder="Enter username" 
-                            value={editUserForm.username}
-                            onChange={(e) => handleEditInputChange('username', e.target.value)}
-                          />
-                          {editFormErrors.username && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {editFormErrors.username}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label fw-semibold">Email</label>
-                          <input 
-                            type="email" 
-                            className={`form-control rounded-3 ${editFormErrors.email ? 'is-invalid' : ''}`}
-                            placeholder="Enter email address" 
-                            value={editUserForm.email}
-                            onChange={(e) => handleEditInputChange('email', e.target.value)}
-                          />
-                          {editFormErrors.email && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {editFormErrors.email}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Phone Number</label>
-                          <input 
-                            type="tel" 
-                            className={`form-control rounded-3 ${editFormErrors.phoneNumber ? 'is-invalid' : ''}`}
-                            placeholder="e.g., +1 (555) 123-4567 or 555-123-4567" 
-                            value={editUserForm.phoneNumber}
-                            onChange={(e) => handleEditInputChange('phoneNumber', e.target.value)}
-                          />
-                          {editFormErrors.phoneNumber && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {editFormErrors.phoneNumber}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Role</label>
-                          <select 
-                            className={`form-select rounded-3 ${editFormErrors.role ? 'is-invalid' : ''}`}
-                            value={editUserForm.role}
-                            onChange={(e) => handleEditInputChange('role', e.target.value)}
-                          >
-                            <option value="">Select a role</option>
-                            {roles.map((role) => (
-                              <option key={role.userRoleId} value={role.role}>
-                                {role.role}
-                              </option>
-                            ))}
-                          </select>
-                          {editFormErrors.role && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {editFormErrors.role}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </form>
-                  )}
-                </div>
-                {!editSubmitSuccess && (
-                  <div className="modal-footer border-0 pt-0">
-                    <button
-                      type="button"
-                      className="btn btn-secondary rounded-3"
-                      onClick={resetEditUserModal}
-                      disabled={isEditSubmitting}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary rounded-3"
-                      onClick={handleEditUserSubmit}
-                      disabled={isEditSubmitting}
-                    >
-                      {isEditSubmitting ? (
-                        <>
-                          <div className="spinner-border spinner-border-sm me-2" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                          Updating User...
-                        </>
-                      ) : (
-                        'Update User'
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Add User Modal */}
-        {showAddUser && (
-          <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
-            <div className="modal-dialog modal-dialog-centered modal-lg">
-              <div className="modal-content border-0 rounded-4">
-                <div className="modal-header border-0 pb-0">
-                  <h5 className="modal-title fw-bold">Add New User</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={resetAddUserModal}
-                  ></button>
-                </div>
-                <div className="modal-body">
-                  {submitSuccess ? (
-                    <div className="text-center py-4">
-                      <CheckCircle2 size={64} className="text-success mb-3" />
-                      <h4 className="text-success fw-bold">User Created Successfully!</h4>
-                      <p className="text-muted">The new user has been registered and can now login to the system.</p>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSubmitNewUser}>
-                      <div className="row g-3">
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">First Name</label>
-                          <input 
-                            type="text" 
-                            className={`form-control rounded-3 ${formErrors.firstName ? 'is-invalid' : ''}`}
-                            placeholder="Enter first name" 
-                            value={newUserForm.firstName}
-                            onChange={(e) => handleInputChange('firstName', e.target.value)}
-                          />
-                          {formErrors.firstName && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {formErrors.firstName}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Last Name</label>
-                          <input 
-                            type="text" 
-                            className={`form-control rounded-3 ${formErrors.lastName ? 'is-invalid' : ''}`}
-                            placeholder="Enter last name" 
-                            value={newUserForm.lastName}
-                            onChange={(e) => handleInputChange('lastName', e.target.value)}
-                          />
-                          {formErrors.lastName && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {formErrors.lastName}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label fw-semibold">Username</label>
-                          <input 
-                            type="text" 
-                            className={`form-control rounded-3 ${formErrors.username ? 'is-invalid' : ''}`}
-                            placeholder="Enter username" 
-                            value={newUserForm.username}
-                            onChange={(e) => handleInputChange('username', e.target.value)}
-                          />
-                          {formErrors.username && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {formErrors.username}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label fw-semibold">Email</label>
-                          <input 
-                            type="email" 
-                            className={`form-control rounded-3 ${formErrors.email ? 'is-invalid' : ''}`}
-                            placeholder="Enter email address" 
-                            value={newUserForm.email}
-                            onChange={(e) => handleInputChange('email', e.target.value)}
-                          />
-                          {formErrors.email && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {formErrors.email}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Phone Number</label>
-                          <input 
-                            type="tel" 
-                            className={`form-control rounded-3 ${formErrors.phoneNumber ? 'is-invalid' : ''}`}
-                            placeholder="e.g., +1 (555) 123-4567 or 555-123-4567" 
-                            value={newUserForm.phoneNumber}
-                            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                          />
-                          {formErrors.phoneNumber && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {formErrors.phoneNumber}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Role</label>
-                          <select 
-                            className={`form-select rounded-3 ${formErrors.role ? 'is-invalid' : ''}`}
-                            value={newUserForm.role}
-                            onChange={(e) => handleInputChange('role', e.target.value)}
-                          >
-                            <option value="">Select a role</option>
-                            {roles.map((role) => (
-                              <option key={role.userRoleId} value={role.role}>
-                                {role.role}
-                              </option>
-                            ))}
-                          </select>
-                          {formErrors.role && (
-                            <div className="invalid-feedback d-flex align-items-center">
-                              <AlertCircle size={16} className="me-1" />
-                              {formErrors.role}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Password</label>
-                          <div className="position-relative">
-                            <input 
-                              type={showPassword ? 'text' : 'password'}
-                              className={`form-control rounded-3 pe-5 ${formErrors.password ? 'is-invalid' : ''}`}
-                              placeholder="Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special (@$!%*?&)" 
-                              value={newUserForm.password}
-                              onChange={(e) => handleInputChange('password', e.target.value)}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 border-0 p-1"
-                              style={{ zIndex: 10 }}
-                            >
-                              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                            {formErrors.password && (
-                              <div className="invalid-feedback d-flex align-items-center">
-                                <AlertCircle size={16} className="me-1" />
-                                {formErrors.password}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="col-md-6">
-                          <label className="form-label fw-semibold">Confirm Password</label>
-                          <div className="position-relative">
-                            <input 
-                              type={showReEnterPassword ? 'text' : 'password'}
-                              className={`form-control rounded-3 pe-5 ${formErrors.reEnterPassword ? 'is-invalid' : ''}`}
-                              placeholder="Re-enter password" 
-                              value={newUserForm.reEnterPassword}
-                              onChange={(e) => handleInputChange('reEnterPassword', e.target.value)}
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowReEnterPassword(!showReEnterPassword)}
-                              className="btn btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 border-0 p-1"
-                              style={{ zIndex: 10 }}
-                            >
-                              {showReEnterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                            {formErrors.reEnterPassword && (
-                              <div className="invalid-feedback d-flex align-items-center">
-                                <AlertCircle size={16} className="me-1" />
-                                {formErrors.reEnterPassword}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </form>
-                  )}
-                </div>
-                {!submitSuccess && (
-                  <div className="modal-footer border-0 pt-0">
-                    <button
-                      type="button"
-                      className="btn btn-secondary rounded-3"
-                      onClick={resetAddUserModal}
-                      disabled={isSubmitting}
-                    >
-                      Cancel
-                    </button>
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary rounded-3"
-                      onClick={handleSubmitNewUser}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="spinner-border spinner-border-sm me-2" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                          Creating User...
-                        </>
-                      ) : (
-                        'Create User'
-                      )}
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         )}
 
+
+       
+
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && deletingUser && (
-          <div className="modal d-block" style={{backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050}}>
+          <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1050 }}>
             <div className="modal-dialog modal-dialog-centered">
               <div className="modal-content border-0 rounded-4">
                 <div className="modal-header border-0 pb-0">

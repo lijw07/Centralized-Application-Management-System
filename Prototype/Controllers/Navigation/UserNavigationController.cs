@@ -224,6 +224,33 @@ public class UserNavigationController(
             return new { success = true, user = userDto };
         }, "retrieving profile");
     }
+    [HttpGet("getUser")]
+    public async Task<IActionResult> GetUser([FromQuery] string userId)
+    {
+        return await ExecuteWithErrorHandlingAsync<object>(async () =>
+        {          
+            Guid parsedUserId = Guid.Parse(userId);
+            var freshUser = await context.Users.FirstOrDefaultAsync(u => u.UserId == parsedUserId);
+            if (freshUser == null)
+                return new { success = false, message = "User not found" };
+
+            var userDto = new UserDto
+            {
+                UserId = freshUser.UserId,
+                FirstName = freshUser.FirstName,
+                LastName = freshUser.LastName,
+                Username = freshUser.Username,
+                Email = freshUser.Email,
+                PhoneNumber = freshUser.PhoneNumber,
+                IsActive = freshUser.IsActive,
+                Role = freshUser.Role,
+                LastLogin = freshUser.LastLogin,
+                CreatedAt = freshUser.CreatedAt
+            };
+
+            return new { success = true, data = userDto };
+        }, "retrieving user data");
+    }
 
     [HttpGet("counts")]
     public async Task<IActionResult> GetUserCounts()
