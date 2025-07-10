@@ -1,6 +1,6 @@
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Settings, LogOut, ChevronDown, Mail } from 'lucide-react';
+import { User, Settings, LogOut, ChevronDown } from 'lucide-react';
 import NavMenu from './nav/NavMenu';
 import { useAuth } from '../contexts/AuthContext';
 import WebsiteLayout from './website/WebsiteLayout';

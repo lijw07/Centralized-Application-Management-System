@@ -6,7 +6,6 @@ import {
   Shield, 
   ChevronDown,
   Phone,
-  Mail,
   ArrowRight
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

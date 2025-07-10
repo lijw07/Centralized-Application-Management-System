@@ -4,16 +4,13 @@ import {
   FileText, 
   AlertTriangle,
   CheckCircle,
-  Clock,
   Download,
-  Settings,
   BarChart3,
   RefreshCw,
   Award,
   Target,
   TrendingUp,
   Users,
-  Database,
   Activity,
   Calendar
 } from 'lucide-react';

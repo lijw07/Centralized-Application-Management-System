@@ -4,8 +4,6 @@ import {
   AlertTriangle, 
   Users, 
   Activity, 
-  TrendingUp, 
-  TrendingDown,
   Eye,
   MapPin,
   Clock,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink as RouterLink, useLocation } from 'react-router-dom';
-import { Home, Users, Database, Shield, Activity, FileText, Key, Monitor, Briefcase, UserPlus, Award, Settings } from 'lucide-react';
+import { Home, Users, Database, Shield, Activity, FileText, Key, Monitor, Briefcase, UserPlus, Award } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './NavMenu.css';
 
