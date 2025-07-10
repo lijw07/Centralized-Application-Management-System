@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Database, Plus, Trash2, TestTube, Eye, EyeOff, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader, CheckCircle2, AlertTriangle, Search } from 'lucide-react';
 import { applicationApi } from '../../services/api';
+import { DataSourceTypeEnum, AuthenticationTypeEnum, getDataSourceTypeName, getAuthenticationTypeName } from '../../types/enums';
 
 interface Application {
     applicationId: string;
@@ -13,64 +14,50 @@ interface Application {
         databaseName: string;
         authenticationType: string;
         username?: string;
-        // Additional fields based on authentication type
+        password?: string;
         authenticationDatabase?: string;
         awsAccessKeyId?: string;
+        awsSecretAccessKey?: string;
         awsRoleArn?: string;
+        awsRegion?: string;
         principal?: string;
         serviceName?: string;
         serviceRealm?: string;
         canonicalizeHostName?: boolean;
+        azureStorageAccountName?: string;
+        azureStorageAccountKey?: string;
+        azureContainerName?: string;
+        azureBlobName?: string;
+        azureTenantId?: string;
+        azureClientId?: string;
+        azureClientSecret?: string;
+        gcpServiceAccountJson?: string;
+        gcpProjectId?: string;
+        gcpBucketName?: string;
+        gcpObjectName?: string;
+        // API fields
+        apiKey?: string;
+        bearerToken?: string;
+        oauthToken?: string;
+        filePath?: string;
+        fileName?: string;
+        ftpMode?: string;
+        sshPrivateKey?: string;
+        sshPassphrase?: string;
+        sslMode?: string;
+        certificatePath?: string;
+        connectionTimeout?: number;
+        commandTimeout?: number;
+        maxPoolSize?: number;
+        minPoolSize?: number;
+        // Additional options
+        additionalOptions?: string;
+        connectionString?: string;
     };
     createdAt?: string;
     updatedAt?: string;
 }
 
-// Enum mapping to convert numeric values to string names
-const DataSourceTypeEnum: { [key: number]: string } = {
-    // Database connections
-    0: 'MicrosoftSqlServer',
-    1: 'MySql', 
-    2: 'PostgreSql',
-    3: 'MongoDb',
-    4: 'Redis',
-    5: 'Oracle',
-    6: 'MariaDb',
-    7: 'Sqlite',
-    8: 'Cassandra',
-    9: 'ElasticSearch',
-    
-    // API connections
-    10: 'RestApi',
-    11: 'GraphQL',
-    12: 'SoapApi', 
-    13: 'ODataApi',
-    14: 'WebSocket',
-    
-    // File-based connections
-    15: 'CsvFile',
-    16: 'JsonFile',
-    17: 'XmlFile',
-    18: 'ExcelFile',
-    19: 'ParquetFile',
-    20: 'YamlFile',
-    21: 'TextFile',
-    
-    // Cloud storage
-    22: 'AzureBlobStorage',
-    23: 'AmazonS3',
-    24: 'GoogleCloudStorage',
-    
-    // Message queues
-    25: 'RabbitMQ',
-    26: 'ApacheKafka',
-    27: 'AzureServiceBus'
-};
-
-// Helper function to get enum string name from numeric value
-const getDataSourceTypeName = (numericValue: number): string => {
-    return DataSourceTypeEnum[numericValue] || 'MicrosoftSqlServer';
-};
 
 const Applications: React.FC = () => {
     // Shared function to calculate pagination data to ensure consistency

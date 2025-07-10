@@ -10,6 +10,11 @@ interface UserSettings {
     username: string;
     email: string;
     phoneNumber: string;
+    isActive: boolean;
+    role: string;
+    lastLogin?: string;
+    createdAt: string;
+    isTemporary?: boolean;
 }
 
 const SettingsDashboard: React.FC = () => {
