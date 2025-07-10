@@ -37,9 +37,14 @@ ENV DOTNET_ENVIRONMENT=Development
 # Disable hot reload for debugging (uncomment if needed)
 # ENV DOTNET_HOTRELOAD_ENABLED=false
 
-# Create non-root user for security
-RUN adduser --disabled-password --gecos '' dotnetuser && \
-    chown -R dotnetuser:dotnetuser /src
+# Get host user ID and create matching user
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN groupadd --gid $GROUP_ID dotnetuser && \
+    adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID dotnetuser && \
+    chown -R dotnetuser:dotnetuser /src && \
+    mkdir -p /src/bin /src/obj && \
+    chown -R dotnetuser:dotnetuser /src/bin /src/obj
 
 USER dotnetuser
 

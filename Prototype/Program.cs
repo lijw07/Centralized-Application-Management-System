@@ -256,23 +256,44 @@ using (var scope = app.Services.CreateScope())
                 logger.LogWarning(dbCreateEx, "Could not create database using master connection. Will try EnsureCreated.");
             }
             
-            // Apply migrations (this will create the database schema)
-            // Note: Don't use EnsureCreated with migrations - they conflict!
+            // Create database schema (since no migrations exist, use EnsureCreated)
             try
             {
-                await context.Database.MigrateAsync();
-                logger.LogDebug("Database migrations applied successfully.");
-            }
-            catch (Exception migrationEx)
-            {
-                logger.LogWarning(migrationEx, "Migration failed, possibly due to existing schema. Checking if database is accessible...");
+                logger.LogInformation("Attempting to create database schema...");
                 
-                // If migration fails, just check if we can connect
-                var isConnected = await context.Database.CanConnectAsync();
-                if (!isConnected)
+                // First check if database can connect
+                var initialCanConnect = await context.Database.CanConnectAsync();
+                logger.LogInformation("Initial database connection test: {CanConnect}", initialCanConnect);
+                
+                bool tablesExist = false;
+                try
                 {
-                    throw new Exception("Cannot connect to database after migration failure", migrationEx);
+                    var userCount = await context.Users.CountAsync();
+                    tablesExist = true;
+                    logger.LogInformation("Tables already exist. Users count: {UserCount}", userCount);
                 }
+                catch (Exception)
+                {
+                    logger.LogInformation("Tables do not exist yet, will create schema");
+                }
+                
+                if (!tablesExist)
+                {
+                    logger.LogInformation("Deleting existing database to ensure clean schema creation...");
+                    await context.Database.EnsureDeletedAsync();
+                    
+                    logger.LogInformation("Creating fresh database schema...");
+                    var created = await context.Database.EnsureCreatedAsync();
+                    logger.LogInformation("Database schema creation result: {Created}", created);
+                    
+                    var userCountAfterCreate = await context.Users.CountAsync();
+                    logger.LogInformation("Schema created successfully. Users table accessible, count: {UserCount}", userCountAfterCreate);
+                }
+            }
+            catch (Exception schemaEx)
+            {
+                logger.LogError(schemaEx, "Schema creation failed completely");
+                throw;
             }
             
             // Test database connection
