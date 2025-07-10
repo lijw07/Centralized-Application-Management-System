@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
 using Prototype.Common;
+using Prototype.Configuration;
 using Prototype.DTOs;
 using Prototype.Enum;
 using Prototype.Services.Interfaces;
@@ -9,10 +11,20 @@ namespace Prototype.Services;
 
 public class ValidationService : IValidationService
 {
-    private readonly Regex _emailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
-    private readonly Regex _phoneRegex = new(@"^\+?[\d\s\-\(\)]{10,}$", RegexOptions.Compiled);
-    private readonly Regex _passwordRegex = new(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$", RegexOptions.Compiled);
-    private readonly Regex _usernameRegex = new(@"^[a-zA-Z0-9_.-]+$", RegexOptions.Compiled);
+    private readonly ValidationOptions _options;
+    private readonly Regex _emailRegex;
+    private readonly Regex _phoneRegex;
+    private readonly Regex _passwordRegex;
+    private readonly Regex _usernameRegex;
+
+    public ValidationService(IOptions<ValidationOptions> options)
+    {
+        _options = options.Value;
+        _emailRegex = new Regex(_options.EmailRegex, RegexOptions.Compiled);
+        _phoneRegex = new Regex(_options.PhoneRegex, RegexOptions.Compiled);
+        _passwordRegex = new Regex(_options.PasswordRegex, RegexOptions.Compiled);
+        _usernameRegex = new Regex(_options.UsernameRegex, RegexOptions.Compiled);
+    }
 
     public Result ValidateRegisterRequest(RegisterRequestDto request)
     {
@@ -20,8 +32,8 @@ public class ValidationService : IValidationService
 
         if (string.IsNullOrWhiteSpace(request.Username))
             errors.Add("Username is required");
-        else if (request.Username.Length < 3 || request.Username.Length > 100)
-            errors.Add("Username must be between 3 and 100 characters");
+        else if (request.Username.Length < _options.UsernameMinLength || request.Username.Length > _options.UsernameMaxLength)
+            errors.Add($"Username must be between {_options.UsernameMinLength} and {_options.UsernameMaxLength} characters");
         else if (!_usernameRegex.IsMatch(request.Username))
             errors.Add("Username can only contain letters, numbers, underscores, dots, and hyphens");
 
@@ -40,13 +52,13 @@ public class ValidationService : IValidationService
 
         if (string.IsNullOrWhiteSpace(request.FirstName))
             errors.Add("First name is required");
-        else if (request.FirstName.Length > 50)
-            errors.Add("First name cannot exceed 50 characters");
+        else if (request.FirstName.Length > _options.FirstNameMaxLength)
+            errors.Add($"First name cannot exceed {_options.FirstNameMaxLength} characters");
 
         if (string.IsNullOrWhiteSpace(request.LastName))
             errors.Add("Last name is required");
-        else if (request.LastName.Length > 50)
-            errors.Add("Last name cannot exceed 50 characters");
+        else if (request.LastName.Length > _options.LastNameMaxLength)
+            errors.Add($"Last name cannot exceed {_options.LastNameMaxLength} characters");
 
         if (string.IsNullOrWhiteSpace(request.PhoneNumber))
             errors.Add("Phone number is required");

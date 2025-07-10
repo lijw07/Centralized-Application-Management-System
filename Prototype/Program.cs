@@ -75,9 +75,15 @@ builder.Services.AddDbContext<SentinelContext>(options =>
     .EnableDetailedErrors(builder.Environment.IsDevelopment())
     .ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.FirstWithoutOrderByAndFilterWarning)));
 
-// Bind SMTP Settings
+// Configure application options
 builder.Services.Configure<SmtpSettingsPoco>(
     builder.Configuration.GetSection("Smtp"));
+builder.Services.Configure<Prototype.Configuration.DatabaseOptions>(
+    builder.Configuration.GetSection(Prototype.Configuration.DatabaseOptions.SectionName));
+builder.Services.Configure<Prototype.Configuration.ValidationOptions>(
+    builder.Configuration.GetSection(Prototype.Configuration.ValidationOptions.SectionName));
+builder.Services.Configure<Prototype.Configuration.UserRecoveryOptions>(
+    builder.Configuration.GetSection(Prototype.Configuration.UserRecoveryOptions.SectionName));
 
 // Register Application Services
 builder.Services.AddScoped<IEmailNotificationFactoryService, EmailNotificationFactoryService>();
@@ -88,10 +94,8 @@ builder.Services.AddScoped<IApplicationFactoryService, ApplicationFactoryService
 builder.Services.AddScoped<IUserApplicationFactoryService, UserApplicationFactoryService>();
 builder.Services.AddScoped<IApplicationConnectionFactoryService, ApplicationConnectionFactoryService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
-builder.Services.AddScoped<TransactionService>();
 builder.Services.AddScoped<PasswordEncryptionService>();
 builder.Services.AddScoped<IValidationService, ValidationService>();
-builder.Services.AddScoped<ValidationService>();
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IUserAccountService, UserAccountService>();
 builder.Services.AddScoped<IUserRoleService, UserRoleService>();
@@ -138,7 +142,6 @@ builder.Services.AddScoped<IDatabaseConnectionStrategy, ElasticSearchDatabaseStr
 
 // Add API Connection Strategies
 builder.Services.AddScoped<IApiConnectionStrategy, RestApiConnectionStrategy>();
-// builder.Services.AddScoped<IApiConnectionStrategy, GraphQLConnectionStrategy>(); // TODO: Implement GraphQLConnectionStrategy
 builder.Services.AddScoped<IApiConnectionStrategy, SoapApiConnectionStrategy>();
 
 // Add File Connection Strategies
@@ -152,7 +155,6 @@ builder.Services.AddScoped<IFileConnectionStrategy, GoogleCloudStorageConnection
 
 // Add HttpClient for API connections
 builder.Services.AddHttpClient<RestApiConnectionStrategy>();
-// builder.Services.AddHttpClient<GraphQLConnectionStrategy>(); // TODO: Implement GraphQLConnectionStrategy
 builder.Services.AddHttpClient<SoapApiConnectionStrategy>();
 
 // Add Database Connection Factory

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Prototype.Enum;
+using Prototype.Extensions;
 using Prototype.Models;
 
 namespace Prototype.Data;
@@ -30,10 +31,7 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<ApplicationLogModel>()
             .Property(al => al.ActionType)
-            .HasConversion(
-                aat => aat.ToString(),
-                aat => (ActionTypeEnum)System.Enum.Parse(typeof(ActionTypeEnum), aat)
-            );
+            .HasEnumConversion();
 
         // Configure the relationship to not cascade delete (preserve logs even when application is deleted)
         modelBuilder.Entity<ApplicationLogModel>()
@@ -48,7 +46,7 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<AuditLogModel>()
             .Property(al => al.ActionType)
-            .HasConversion(at => at.ToString(), at => (ActionTypeEnum)System.Enum.Parse(typeof(ActionTypeEnum), at));
+            .HasEnumConversion();
 
         #endregion
 
@@ -56,7 +54,7 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<AuthenticationModel>()
             .Property(a => a.Authentication)
-            .HasConversion(a => a.ToString(), a => (AuthenticationTypeEnum)System.Enum.Parse(typeof(AuthenticationTypeEnum), a));
+            .HasEnumConversion();
 
         #endregion
 
@@ -70,7 +68,7 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<HumanResourceModel>()
             .Property(hr => hr.Status)
-            .HasConversion(s => s.ToString(), s => (StatusEnum)System.Enum.Parse(typeof(StatusEnum), s));
+            .HasEnumConversion();
 
         #endregion
 
@@ -78,7 +76,7 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<UserActivityLogModel>()
             .Property(ual => ual.ActionType)
-            .HasConversion(at => at.ToString(), at => (ActionTypeEnum)System.Enum.Parse(typeof(ActionTypeEnum), at));
+            .HasEnumConversion();
 
         #endregion
         
@@ -108,10 +106,7 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<UserRecoveryRequestModel>()
             .Property(urr => urr.RecoveryType)
-            .HasConversion(
-                ust => ust.ToString(),
-                ust => (UserRecoveryTypeEnum)System.Enum.Parse(typeof(UserRecoveryTypeEnum), ust)
-            );
+            .HasEnumConversion();
 
         modelBuilder.Entity<UserRecoveryRequestModel>()
             .Property(urr => urr.IsUsed)
@@ -123,17 +118,11 @@ public class SentinelContext(DbContextOptions<SentinelContext> options) : DbCont
 
         modelBuilder.Entity<UserRequestModel>()
             .Property(ur => ur.Status)
-            .HasConversion(
-                urs => urs.ToString(),
-                urs => (UserRequestStatusEnum)System.Enum.Parse(typeof(UserRequestStatusEnum), urs)
-            );
+            .HasEnumConversion();
 
         modelBuilder.Entity<UserRequestModel>()
             .Property(ur => ur.Priority)
-            .HasConversion(
-                urp => urp.ToString(),
-                urp => (RequestPriorityEnum)System.Enum.Parse(typeof(RequestPriorityEnum), urp)
-            );
+            .HasEnumConversion();
 
         modelBuilder.Entity<UserRequestModel>()
             .HasOne(ur => ur.User)
