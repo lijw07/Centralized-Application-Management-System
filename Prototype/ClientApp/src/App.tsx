@@ -99,7 +99,7 @@ export default function App() {
                 <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
                   <Accounts />
                 </ProtectedRoute>
-              } />
+              } />       
               <Route path="/settings" element={
                 <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
                   <Settings />
