@@ -25,12 +25,11 @@ import ComplianceDashboard from './components/compliance/ComplianceDashboard';
 import Home from './components/home/Home';
 import About from './components/pages/About';
 import Contact from './components/pages/Contact';
-import { ToastContainer } from 'react-toastify';
 
 // Conditional redirect component
 function ConditionalRedirect() {
   const { isAuthenticated, loading } = useAuth();
-
+  
   if (loading) {
     return (
       <div className="min-vh-100 d-flex align-items-center justify-content-center">
@@ -40,7 +39,7 @@ function ConditionalRedirect() {
       </div>
     );
   }
-
+  
   return <Navigate to={isAuthenticated ? "/dashboard" : "/home"} replace />;
 }
 
@@ -50,105 +49,91 @@ export default function App() {
       <MigrationProvider>
         <NotificationProvider>
           <Layout>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/home" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/verify" element={<VerifyEmailPage />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-
-              {/* Protected routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/security-dashboard" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <SecurityDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/system-health" element={
-                <ProtectedRoute>
-                  <SystemHealthDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/analytics-overview" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <AnalyticsOverview />
-                </ProtectedRoute>
-              } />
-              <Route path="/user-provisioning" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <UserProvisioning />
-                </ProtectedRoute>
-              } />
-              <Route path="/user-requests" element={
-                <ProtectedRoute>
-                  <UserRequests />
-                </ProtectedRoute>
-              } />
-              <Route path="/compliance" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <ComplianceDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/accounts" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <Accounts />
-                </ProtectedRoute>
-              } />       
-              <Route path="/settings" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <Settings />
-                </ProtectedRoute>
-              } />
-              <Route path="/applications" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <Applications />
-                </ProtectedRoute>
-              } />
-              <Route path="/audit-logs" element={
-                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
-                  <AuditLogs />
-                </ProtectedRoute>
-              } />
-              <Route path="/activity-logs" element={
-                <ProtectedRoute allowedRoles={['Platform Admin']}>
-                  <ActivityLogs />
-                </ProtectedRoute>
-              } />
-              <Route path="/application-logs" element={
-                <ProtectedRoute allowedRoles={['Platform Admin']}>
-                  <ApplicationLogs />
-                </ProtectedRoute>
-              } />
-              <Route path="/roles" element={
-                <ProtectedRoute allowedRoles={['Platform Admin']}>
-                  <Roles />
-                </ProtectedRoute>
-              } />
-              <Route path="/system-health" element={
-                <ProtectedRoute allowedRoles={['Platform Admin']}>
-                  <SystemHealthDashboard />
-                </ProtectedRoute>
-              } />
-
-              {/* Conditional redirect based on authentication */}
-              <Route path="/" element={<ConditionalRedirect />} />
-              <Route path="*" element={<ConditionalRedirect />} />
-            </Routes>
-            <ToastContainer
-              position="bottom-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              pauseOnHover
-              draggable
-            />
+        <Routes>
+          {/* Public routes */}
+          <Route path="/home" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/verify" element={<VerifyEmailPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          
+          {/* Protected routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/security-dashboard" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <SecurityDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/analytics-overview" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <AnalyticsOverview />
+            </ProtectedRoute>
+          } />
+          <Route path="/user-provisioning" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <UserProvisioning />
+            </ProtectedRoute>
+          } />
+          <Route path="/user-requests" element={
+            <ProtectedRoute>
+              <UserRequests />
+            </ProtectedRoute>
+          } />
+          <Route path="/compliance" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <ComplianceDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/accounts" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <Accounts />
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <Settings />
+            </ProtectedRoute>
+          } />
+          <Route path="/applications" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <Applications />
+            </ProtectedRoute>
+          } />
+          <Route path="/audit-logs" element={
+            <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+              <AuditLogs />
+            </ProtectedRoute>
+          } />
+          <Route path="/activity-logs" element={
+            <ProtectedRoute allowedRoles={['Platform Admin']}>
+              <ActivityLogs />
+            </ProtectedRoute>
+          } />
+          <Route path="/application-logs" element={
+            <ProtectedRoute allowedRoles={['Platform Admin']}>
+              <ApplicationLogs />
+            </ProtectedRoute>
+          } />
+          <Route path="/roles" element={
+            <ProtectedRoute allowedRoles={['Platform Admin']}>
+              <Roles />
+            </ProtectedRoute>
+          } />
+          <Route path="/system-health" element={
+            <ProtectedRoute allowedRoles={['Platform Admin']}>
+              <SystemHealthDashboard />
+            </ProtectedRoute>
+          } />
+          
+          {/* Conditional redirect based on authentication */}
+          <Route path="/" element={<ConditionalRedirect />} />
+          <Route path="*" element={<ConditionalRedirect />} />
+        </Routes>
           </Layout>
         </NotificationProvider>
       </MigrationProvider>
