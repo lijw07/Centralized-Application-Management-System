@@ -6,6 +6,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Accounts from './components/account/Accounts';
+import AccountDetails from './components/account/Details';
 import Login from './components/login/Login';
 import Dashboard from './components/dashboard/Dashboard';
 import Settings from './components/settings/Settings';
@@ -94,6 +95,11 @@ export default function App() {
               <Accounts />
             </ProtectedRoute>
           } />
+          <Route path="/accounts/:userId" element={
+                <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
+                  <AccountDetails />
+                </ProtectedRoute>
+              } />
           <Route path="/settings" element={
             <ProtectedRoute allowedRoles={['User', 'Admin', 'Platform Admin']}>
               <Settings />
