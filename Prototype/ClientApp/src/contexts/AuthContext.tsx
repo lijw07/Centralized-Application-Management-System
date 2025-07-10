@@ -15,7 +15,11 @@ interface User {
   username: string;
   email: string;
   phoneNumber: string;
+  isActive: boolean;
   role: string;
+  lastLogin?: string;
+  createdAt: string;
+  isTemporary?: boolean;
 }
 
 interface LoginCredentials {

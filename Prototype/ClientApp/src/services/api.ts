@@ -7,6 +7,14 @@ interface ApiResponse<T = any> {
   errors?: string[];
 }
 
+interface PaginatedResponse<T> {
+  data: T[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+}
+
 interface ConnectionTestResponse {
   success: boolean;
   message: string;
@@ -155,7 +163,7 @@ export const userApi = {
     api.post<{ success: boolean; message?: string }>('/settings/user/change-password', passwordData),
   
   getAllUsers: (page: number = 1, pageSize: number = 10) =>
-    api.get<{ success: boolean; data?: { data: any[]; page: number; pageSize: number; totalCount: number; totalPages: number }; users?: any[]; message?: string }>(`/settings/user/all?page=${page}&pageSize=${pageSize}`),
+    api.get<ApiResponse<PaginatedResponse<any>>>(`/settings/user/all?page=${page}&pageSize=${pageSize}`),
 
   getUserCounts: () =>
     api.get<{ success: boolean; data: { totalUsers: number; totalVerifiedUsers: number; totalTemporaryUsers: number }; message?: string }>('/settings/user/counts'),
@@ -196,7 +204,7 @@ export const userApi = {
 // Application Settings API
 export const applicationApi = {
   getApplications: (page: number = 1, pageSize: number = 10) =>
-    api.get<ApiResponse<any>>(`/settings/applications/get-applications?page=${page}&pageSize=${pageSize}`),
+    api.get<ApiResponse<PaginatedResponse<any>>>(`/settings/applications/get-applications?page=${page}&pageSize=${pageSize}`),
   
   createApplication: (applicationData: any) =>
     api.post<ApiResponse>('/settings/applications/new-application-connection', applicationData),
@@ -214,7 +222,7 @@ export const applicationApi = {
 // Role Settings API
 export const roleApi = {
   getAllRoles: (page: number = 1, pageSize: number = 10) =>
-    api.get<{ success: boolean; data?: { data: any[]; page: number; pageSize: number; totalCount: number; totalPages: number }; roles?: any[]; message?: string }>(`/settings/roles?page=${page}&pageSize=${pageSize}`),
+    api.get<ApiResponse<PaginatedResponse<any>>>(`/settings/roles?page=${page}&pageSize=${pageSize}`),
   
   getRoleById: (roleId: string) =>
     api.get<{ success: boolean; role: any; message?: string }>(`/settings/roles/${roleId}`),
@@ -398,4 +406,4 @@ export const userRequestsApi = {
 };
 
 export default api;
-export type { ApiResponse, ConnectionTestResponse, ApiError };
+export type { ApiResponse, PaginatedResponse, ConnectionTestResponse, ApiError };
