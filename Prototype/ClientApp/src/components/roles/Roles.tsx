@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Edit, Trash2, Users, Key, CheckCircle2, AlertCircle, Loader, AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
+import { Shield, Plus, Trash2, Key, CheckCircle2, AlertCircle, Loader, AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import { roleApi } from '../../services/api';
 
 interface Role {

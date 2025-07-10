@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, Shield, ArrowLeft } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 
 const ResetPassword: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -81,7 +81,6 @@ const ResetPassword: React.FC = () => {
             });
 
             if (response.ok) {
-                const result = await response.text();
                 setMessage('Password reset successfully! You can now sign in with your new password.');
                 setError('');
                 // Redirect to login after 3 seconds

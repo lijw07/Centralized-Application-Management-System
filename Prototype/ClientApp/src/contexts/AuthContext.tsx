@@ -1,12 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 
-// Helper function to get API base URL (same as in api.ts)
-const getApiBaseUrl = () => {
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:8080';
-  }
-  return '';
-};
+import { api } from '../services/api';
 
 interface User {
   userId: string;
@@ -51,23 +45,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUserProfile = useCallback(async (authToken: string) => {
     try {
-      const response = await fetch(`${getApiBaseUrl()}/settings/user/profile`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.user) {
-          setUser(data.user);
-        } else {
-          // Invalid token, clear auth state
-          clearAuthState();
-        }
+      localStorage.setItem('authToken', authToken);
+      const response = await api.get<{ success: boolean; user: any; message?: string }>('/settings/user/profile');
+      
+      if (response.success && response.user) {
+        setUser(response.user);
       } else {
-        // Unauthorized, clear auth state
         clearAuthState();
       }
     } catch (error) {
@@ -93,31 +76,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginCredentials): Promise<{ success: boolean; message: string }> => {
     try {
       setLoading(true);
-      const response = await fetch(`${getApiBaseUrl()}/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
+      const response = await api.post<{ success: boolean; token: string; message: string }>('/login', credentials);
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        const authToken = data.token;
+      if (response.success) {
+        const authToken = response.token;
         setToken(authToken);
         localStorage.setItem('authToken', authToken);
         
-        // Fetch user profile
         await fetchUserProfile(authToken);
         
-        return { success: true, message: data.message || 'Login successful' };
+        return { success: true, message: response.message || 'Login successful' };
       } else {
-        return { success: false, message: data.message || 'Login failed' };
+        return { success: false, message: response.message || 'Login failed' };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      return { success: false, message: 'Network error occurred' };
+      return { success: false, message: error.message || 'Network error occurred' };
     } finally {
       setLoading(false);
     }
@@ -125,14 +99,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Call logout endpoint if token exists
       if (token) {
-        await fetch(`${getApiBaseUrl()}/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+        await api.post('/logout');
       }
     } catch (error) {
       console.error('Logout error:', error);

@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Server, 
   Database, 
   Cpu, 
   HardDrive, 
   Wifi, 
-  Activity, 
   AlertTriangle, 
   CheckCircle2, 
   AlertCircle,
@@ -13,8 +11,6 @@ import {
   TrendingDown,
   RefreshCw,
   Clock,
-  Zap,
-  Globe,
   Monitor,
   BarChart3
 } from 'lucide-react';

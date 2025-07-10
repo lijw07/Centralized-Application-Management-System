@@ -7,8 +7,6 @@ import {
   Send,
   CheckCircle,
   Building2,
-  Users,
-  Code,
   HeadphonesIcon,
   MessageSquare,
   Calendar

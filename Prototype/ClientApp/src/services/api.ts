@@ -93,14 +93,10 @@ class ApiService {
   }
 }
 
-// Create singleton instance with proper base URL
-const getApiBaseUrl = () => {
-  // In development, use localhost for browser access
+const getApiBaseUrl = (): string => {
   if (process.env.NODE_ENV === 'development') {
-    // Always use localhost for browser access, regardless of REACT_APP_API_URL
     return 'http://localhost:8080';
   }
-  // In production, use relative URLs (handled by proxy)
   return '';
 };
 

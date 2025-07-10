@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   BarChart3, 
   Database, 
   Users, 
-  Activity, 
   Shield, 
   TrendingUp, 
   Server,
@@ -15,7 +13,6 @@ import {
   Cpu,
   HardDrive,
   Wifi,
-  Calendar,
   Eye,
   Zap,
   AlertCircle
@@ -54,7 +51,6 @@ export default function Dashboard() {
   const [seconds, setSeconds] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalApplications: 0,
     totalRoles: 0,
