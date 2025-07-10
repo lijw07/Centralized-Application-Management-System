@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Prototype.Configuration;
 using Prototype.Data;
 using Prototype.DTOs;
 using Prototype.DTOs.Responses;
@@ -16,10 +18,12 @@ public class UserAccountService(
     TransactionService transactionService,
     PasswordEncryptionService passwordService,
     ILogger<UserAccountService> logger,
-    IHttpContextAccessor httpContextAccessor)
+    IHttpContextAccessor httpContextAccessor,
+    IOptions<UserRecoveryOptions> recoveryOptions)
     : IUserAccountService
 {
     private readonly ValidationService _validationService = validationService;
+    private readonly UserRecoveryOptions _recoveryOptions = recoveryOptions.Value;
 
     public async Task<UserModel?> GetUserByEmailAsync(string email)
     {
@@ -86,8 +90,7 @@ public class UserAccountService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "Failed to send verification email to {Email}, but user was created", request.Email);
-                // TODO: Continue even if email fails - user can be verified manually
+                logger.LogWarning(ex, "Failed to send verification email to {Email}, but user was created. User can be verified manually by admin.", request.Email);
             }
             
             return new LoginResponse
@@ -124,7 +127,7 @@ public class UserAccountService(
                 IsUsed = false,
                 RecoveryType = request.UserRecoveryType,
                 RequestedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(30)
+                ExpiresAt = DateTime.UtcNow.AddMinutes(_recoveryOptions.TokenExpirationMinutes)
             };
 
             context.UserRecoveryRequests.Add(userRecovery);
@@ -138,12 +141,7 @@ public class UserAccountService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Failed to send password reset email to {Email}. Recovery request {RecoveryId} was saved but email failed.", request.Email, userRecovery.UserRecoveryRequestId);
-                
-                // TODO:
-                // Don't return error here - the recovery request was saved successfully
-                // User can still use the token if they have it, or admin can manually send
-                // Just log the email failure and continue
+                logger.LogError(ex, "Failed to send password reset email to {Email}. Recovery request {RecoveryId} was saved but email failed. Admin can manually send the reset link or user can request again.", request.Email, userRecovery.UserRecoveryRequestId);
             }
 
             await CreateAuditLogAsync(user.UserId, ActionTypeEnum.ForgotPassword, "Password reset requested");

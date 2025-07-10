@@ -28,65 +28,40 @@ public class SqlServerDatabaseStrategy(
 
     public string BuildConnectionString(ConnectionSourceDto source)
     {
-        var builder = new SqlConnectionStringBuilder
-        {
-            DataSource = IsLocalDbInstance(source.Host) ? source.Host : $"{source.Host},{source.Port}",
-            InitialCatalog = source.DatabaseName ?? "master",
-            TrustServerCertificate = true,
-            ConnectTimeout = 30,
-            CommandTimeout = 30
-        };
-
-        switch (source.AuthenticationType)
-        {
-            case AuthenticationTypeEnum.UserPassword:
-                if (string.IsNullOrEmpty(source.Username) || string.IsNullOrEmpty(source.Password))
-                    throw new ArgumentException("Username and password are required for UserPassword authentication.");
-                builder.UserID = source.Username;
-                builder.Password = source.Password;
-                break;
-
-            case AuthenticationTypeEnum.WindowsIntegrated:
-                builder.IntegratedSecurity = true;
-                break;
-
-            case AuthenticationTypeEnum.AzureAdPassword:
-                if (string.IsNullOrEmpty(source.Username) || string.IsNullOrEmpty(source.Password))
-                    throw new ArgumentException("Username and password are required for Azure AD Password authentication.");
-                builder.UserID = source.Username;
-                builder.Password = source.Password;
-                builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
-                break;
-
-            case AuthenticationTypeEnum.AzureAdIntegrated:
-                builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                break;
-
-            default:
-                throw new NotSupportedException($"Authentication type '{source.AuthenticationType}' is not supported for SQL Server.");
-        }
-
+        var builder = CreateBaseConnectionBuilder(source.Host, source.Port, source.DatabaseName);
+        ConfigureAuthentication(builder, source.AuthenticationType, source.Username, source.Password, false);
         return builder.ConnectionString;
     }
 
     public string BuildConnectionString(ApplicationConnectionModel source)
     {
-        var builder = new SqlConnectionStringBuilder
+        var builder = CreateBaseConnectionBuilder(source.Host, source.Port, source.DatabaseName);
+        ConfigureAuthentication(builder, source.AuthenticationType, source.Username, source.Password, true);
+        return builder.ConnectionString;
+    }
+
+    private SqlConnectionStringBuilder CreateBaseConnectionBuilder(string host, string port, string? databaseName)
+    {
+        return new SqlConnectionStringBuilder
         {
-            DataSource = IsLocalDbInstance(source.Host) ? source.Host : $"{source.Host},{source.Port}",
-            InitialCatalog = source.DatabaseName ?? "master",
+            DataSource = IsLocalDbInstance(host) ? host : $"{host},{port}",
+            InitialCatalog = databaseName ?? "master",
             TrustServerCertificate = true,
             ConnectTimeout = 30,
             CommandTimeout = 30
         };
+    }
 
-        switch (source.AuthenticationType)
+    private void ConfigureAuthentication(SqlConnectionStringBuilder builder, AuthenticationTypeEnum authType, 
+        string? username, string? password, bool isEncrypted)
+    {
+        switch (authType)
         {
             case AuthenticationTypeEnum.UserPassword:
-                if (string.IsNullOrEmpty(source.Username) || string.IsNullOrEmpty(source.Password))
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                     throw new ArgumentException("Username and password are required for UserPassword authentication.");
-                builder.UserID = source.Username;
-                builder.Password = encryptionService.Decrypt(source.Password);
+                builder.UserID = username;
+                builder.Password = isEncrypted ? encryptionService.Decrypt(password) : password;
                 break;
 
             case AuthenticationTypeEnum.WindowsIntegrated:
@@ -94,10 +69,10 @@ public class SqlServerDatabaseStrategy(
                 break;
 
             case AuthenticationTypeEnum.AzureAdPassword:
-                if (string.IsNullOrEmpty(source.Username) || string.IsNullOrEmpty(source.Password))
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                     throw new ArgumentException("Username and password are required for Azure AD Password authentication.");
-                builder.UserID = source.Username;
-                builder.Password = encryptionService.Decrypt(source.Password);
+                builder.UserID = username;
+                builder.Password = isEncrypted ? encryptionService.Decrypt(password) : password;
                 builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
                 break;
 
@@ -106,10 +81,8 @@ public class SqlServerDatabaseStrategy(
                 break;
 
             default:
-                throw new NotSupportedException($"Authentication type '{source.AuthenticationType}' is not supported for SQL Server.");
+                throw new NotSupportedException($"Authentication type '{authType}' is not supported for SQL Server.");
         }
-
-        return builder.ConnectionString;
     }
 
     private bool IsLocalDbInstance(string host)
