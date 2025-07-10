@@ -138,7 +138,7 @@ const Applications: React.FC = () => {
         };
     };
     const [applications, setApplications] = useState<Application[]>([]);
-    const [allApplications, setAllApplications] = useState<Application[]>([]); // Store all applications for client-side operations
+    const [allApplications, setAllApplications] = useState<Application[]>([]);
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [connectionTestResult, setConnectionTestResult] = useState<{message: string, success: boolean} | null>(null);
@@ -242,8 +242,7 @@ const Applications: React.FC = () => {
 
     const fetchAllApplications = async () => {
         try {
-            // Fetch all applications by requesting a large page size
-            const response = await applicationApi.getApplications(1, 1000); // Large enough to get all
+            const response = await applicationApi.getApplications(1, 1000);
             if (response.success && response.data?.data) {
                 setAllApplications(response.data.data);
                 return response.data.data;
@@ -273,7 +272,6 @@ const Applications: React.FC = () => {
         }
     };
 
-    // Smart refetch that handles empty pages after deletion
     const refetchApplications = async () => {
         setLoading(true);
         try {
@@ -282,11 +280,9 @@ const Applications: React.FC = () => {
                 const newTotalPages = response.data.totalPages || 1;
                 const newTotalCount = response.data.totalCount || 0;
                 
-                // If current page is beyond available pages and we have items, go to last page
                 if (currentPage > newTotalPages && newTotalCount > 0) {
                     await fetchApplications(newTotalPages, pageSize);
                 } else if (newTotalCount === 0) {
-                    // If no items at all, go to page 1
                     setCurrentPage(1);
                     setApplications([]);
                     setAllApplications([]);
@@ -294,29 +290,34 @@ const Applications: React.FC = () => {
                     setTotalPages(1);
                     setLoading(false);
                 } else {
-                    // Normal case - update with current data
                     setApplications(response.data.data);
                     setTotalCount(newTotalCount);
                     setTotalPages(newTotalPages);
                     setLoading(false);
                 }
             }
-            // Also refresh all applications
-            await fetchAllApplications();
+            
+            const hasFilters = searchTerm !== '' || filterConnectionType !== 'all' || 
+                              filterAuthType !== 'all' || sortOrder === 'oldest';
+            if (hasFilters) {
+                await fetchAllApplications();
+            }
         } catch (error) {
             console.error('Failed to fetch applications:', error);
             setLoading(false);
         }
     };
 
-    // Refetch and navigate to first page (where new items should appear)
     const refetchAndGoToFirstPage = async () => {
         setLoading(true);
         try {
-            // Navigate to the first page where new items should appear
             await fetchApplications(1, pageSize);
-            // Also refresh all applications
-            await fetchAllApplications();
+            
+            const hasFilters = searchTerm !== '' || filterConnectionType !== 'all' || 
+                              filterAuthType !== 'all' || sortOrder === 'oldest';
+            if (hasFilters) {
+                await fetchAllApplications();
+            }
         } catch (error) {
             console.error('Failed to fetch applications:', error);
             setLoading(false);
@@ -325,10 +326,18 @@ const Applications: React.FC = () => {
 
     useEffect(() => {
         fetchApplications(1, pageSize);
-        // Also fetch all applications for client-side operations
-        fetchAllApplications();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+        const hasFilters = searchTerm !== '' || filterConnectionType !== 'all' || 
+                          filterAuthType !== 'all' || sortOrder === 'oldest';
+        
+        if (hasFilters && allApplications.length === 0) {
+            fetchAllApplications();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, filterConnectionType, filterAuthType, sortOrder]);
 
     // Reset form to initial state
     const resetForm = () => {
