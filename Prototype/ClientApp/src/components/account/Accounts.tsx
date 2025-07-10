@@ -179,23 +179,6 @@ export default function Accounts() {
           const totalPages = usersResponse.data.totalPages || 1;
           hasMoreData = currentPage < totalPages;
           currentPage++;
-        } else if (usersResponse.success && usersResponse.users) {
-          // Fallback for old API response format
-          const transformedUsers: User[] = usersResponse.users.map((user: any) => ({
-            userId: user.userId,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            username: user.username,
-            email: user.email,
-            phoneNumber: user.phoneNumber,
-            isActive: user.isActive,
-            role: user.role,
-            lastLogin: user.lastLogin,
-            createdAt: user.createdAt,
-            isTemporary: user.isTemporary || false
-          }));
-          allUsers = transformedUsers;
-          hasMoreData = false; // Old format returns all data at once
         } else {
           hasMoreData = false;
         }
@@ -237,30 +220,6 @@ export default function Accounts() {
         setPageSize(usersResponse.data.pageSize || size);
         setTotalCount(usersResponse.data.totalCount || 0);
         setTotalPages(usersResponse.data.totalPages || 1);
-      } else if (usersResponse.success && usersResponse.users) {
-        // Fallback for old API response format - use client-side pagination
-        const allTransformedUsers: User[] = usersResponse.users.map((user: any) => ({
-          userId: user.userId,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          isActive: user.isActive,
-          role: user.role,
-          lastLogin: user.lastLogin,
-          createdAt: user.createdAt,
-          isTemporary: user.isTemporary || false
-        }));
-        const startIndex = (page - 1) * size;
-        const endIndex = startIndex + size;
-        const paginatedUsers = allTransformedUsers.slice(startIndex, endIndex);
-        setUsers(paginatedUsers);
-        // Set pagination values for non-paginated response
-        setTotalCount(allTransformedUsers.length);
-        setTotalPages(Math.ceil(allTransformedUsers.length / size));
-        setCurrentPage(page);
-        setPageSize(size);
       } else {
         console.error('Failed to load users:', usersResponse.message);
         setUsers([]);
@@ -276,9 +235,6 @@ export default function Accounts() {
       
       if (rolesResponse.success && rolesResponse.data?.data) {
         setRoles(rolesResponse.data.data);
-      } else if (rolesResponse.success && rolesResponse.roles) {
-        // Fallback for old API response format
-        setRoles(rolesResponse.roles);
       } else {
         console.error('Failed to load roles:', rolesResponse.message);
         setRoles([]);

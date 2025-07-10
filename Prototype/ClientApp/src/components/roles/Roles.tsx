@@ -50,9 +50,6 @@ const Roles: React.FC = () => {
             if (response.success && response.data?.data) {
                 setAllRoles(response.data.data);
                 return response.data.data;
-            } else if (response.success && response.roles) {
-                setAllRoles(response.roles);
-                return response.roles;
             }
             return [];
         } catch (error) {
@@ -71,16 +68,6 @@ const Roles: React.FC = () => {
                 setPageSize(response.data.pageSize || size);
                 setTotalCount(response.data.totalCount || 0);
                 setTotalPages(response.data.totalPages || 1);
-            } else if (response.success && response.roles) {
-                const startIndex = (page - 1) * size;
-                const endIndex = startIndex + size;
-                const paginatedRoles = response.roles.slice(startIndex, endIndex);
-                setRoles(paginatedRoles);
-                // Set pagination values for non-paginated response
-                setTotalCount(response.roles.length);
-                setTotalPages(Math.ceil(response.roles.length / size));
-                setCurrentPage(page);
-                setPageSize(size);
             }
         } catch (error) {
             console.error('Failed to fetch roles:', error);
@@ -97,8 +84,6 @@ const Roles: React.FC = () => {
             let totalItems = 0;
             if (response.data?.totalCount !== undefined) {
                 totalItems = response.data.totalCount;
-            } else if (response.roles) {
-                totalItems = response.roles.length;
             }
             
             const newTotalPages = Math.ceil(totalItems / pageSize);
